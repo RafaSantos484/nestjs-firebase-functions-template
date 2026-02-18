@@ -51,9 +51,6 @@ Copy and customize environment files:
 # Development environment
 cp .env.dev.example .env.dev
 
-# Local/emulator environment  
-cp .env.local .env.local
-
 # Production environment
 cp .env.production.example .env.production
 ```
@@ -73,6 +70,43 @@ CORS_ORIGIN=https://yourdomain.com,https://app.yourdomain.com
 SKIP_AUTH=false
 NODE_ENV=production
 ```
+
+### 3.1 Configure Firebase Service Account Credentials (Optional)
+
+If your application needs to interact with Firebase services (Firestore, Auth, etc.), set up credentials:
+
+1. Go to [Firebase Console](https://console.firebase.google.com/) → Your Project → Settings ⚙️ → Service Accounts
+2. Click **"Generate New Private Key"**
+3. Copy the downloaded `credentials.json` to your project root:
+
+```bash
+cp ~/Downloads/credentials.json .
+```
+
+4. Update `credentials.json.example` with placeholder values (safe to commit):
+
+```json
+{
+  "type": "service_account",
+  "project_id": "your-firebase-project-id",
+  "private_key_id": "key_id_here",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nYOUR_KEY_HERE\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-xxx@your-project.iam.gserviceaccount.com",
+  "client_id": "client_id_here",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-xxx%40your-project.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
+```
+
+⚠️ **Important:** 
+- `credentials.json` is in `.gitignore` - never commit it!
+- Only commit `credentials.json.example` with placeholder values
+- For production, use Cloud Secret Manager or secure environment variables
+
+For detailed setup instructions, see [FIREBASE_CREDENTIALS.md](./FIREBASE_CREDENTIALS.md).
 
 ### 4. Update Application Entry Point (Optional)
 

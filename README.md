@@ -58,11 +58,10 @@ Update `.firebaserc` with your project ID:
 
 ### 3. Configure Environment Variables
 
-Copy example files and configure:
+Copy example file and configure:
 
 ```bash
 cp .env.dev.example .env.dev
-cp .env.local .env.local
 ```
 
 Edit `.env.dev`:
@@ -76,9 +75,6 @@ SKIP_AUTH=true
 
 ```bash
 # Local development (TypeScript hot reload)
-npm run start:dev
-
-# Or with NestJS CLI
 npm run dev
 
 # Your API will be available at http://localhost:5001
@@ -88,9 +84,9 @@ npm run dev
 
 ### Development
 ```bash
-npm run start:dev    # Start with hot reload (recommended)
-npm run dev          # Start with NestJS CLI watch mode
-npm start            # Start without watch (ts-node)
+npm run dev          # Start with hot reload (recommended)
+npm run dev:local    # Start with local Firebase emulator
+npm run build        # Compile TypeScript to dist/
 ```
 
 ### Testing
@@ -98,7 +94,6 @@ npm start            # Start without watch (ts-node)
 npm test             # Run all tests
 npm run test:watch   # Run tests in watch mode
 npm run test:coverage # Generate coverage report
-npm run test:e2e     # Run e2e tests only
 ```
 
 ### Build & Deploy
@@ -124,7 +119,8 @@ npm run format       # Format code with Prettier
 │   │   └── env.config.ts       # Centralized environment configuration
 │   ├── app.controller.ts        # Example controller
 │   ├── app.module.ts            # Root module
-│   └── main.ts                  # Application entry point (Firebase Function)
+│   ├── main.ts                  # Application entry point (Firebase Function)
+│   └── utils.ts                 # Utility functions
 ├── test/
 │   ├── config/
 │   │   └── env.config.spec.ts  # Env config tests
@@ -132,7 +128,10 @@ npm run format       # Format code with Prettier
 │   └── app.e2e-spec.ts         # End-to-end tests
 ├── dist/                        # Compiled output (gitignored)
 ├── .env.dev                     # Development environment vars
-├── .env.local                   # Local environment vars
+├── .env.dev.example             # Development environment template
+├── .env.production.example      # Production environment template
+├── credentials.json             # Firebase service account (gitignored) ⚠️
+├── credentials.json.example     # Firebase credentials template
 ├── firebase.json                # Firebase configuration
 ├── .firebaserc                  # Firebase project aliases
 ├── package.json                 # Dependencies and scripts
@@ -187,6 +186,23 @@ CORS is configured in `src/main.ts` and supports:
 - `*` - Allow all origins (development)
 - Single origin: `CORS_ORIGIN=https://example.com`
 - Multiple origins: `CORS_ORIGIN=https://app1.com,https://app2.com`
+
+### Firebase Service Account Credentials
+
+If your application needs to interact with Firebase services (Firestore, Authentication, etc.):
+
+1. Generate credentials at [Firebase Console](https://console.firebase.google.com/) → Your Project → Settings ⚙️ → Service Accounts
+2. Copy `credentials.json` to project root:
+   ```bash
+   cp ~/Downloads/credentials.json .
+   ```
+
+**⚠️ Security Warning:**
+- `credentials.json` is in `.gitignore` - never commit it!
+- Only commit `credentials.json.example` with placeholder values
+- Rotate credentials regularly in production
+
+See [FIREBASE_CREDENTIALS.md](./FIREBASE_CREDENTIALS.md) for detailed setup and best practices.
 
 ## 🚀 Deployment
 
@@ -319,8 +335,8 @@ Firebase Functions may have cold starts. Mitigation:
 
 Ensure you're using the correct `.env` file for your environment:
 - Local development: `.env.dev`
-- Firebase emulators: `.env.local`
-- Production: Set in Firebase Console > Functions > Configuration
+- Firebase emulators: `.env.dev` (with local Firebase emulator setup)
+- Production: Set in Firebase Console > Functions > Runtime environment variables
 
 ### Build Errors
 

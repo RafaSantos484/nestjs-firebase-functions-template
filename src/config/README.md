@@ -1,16 +1,16 @@
-# Configuração de Ambiente
+# Environment Configuration
 
-Esta pasta contém as configurações centralizadas da aplicação, seguindo os princípios da arquitetura hexagonal.
+This folder contains centralized application configurations, following hexagonal architecture principles.
 
 ## Env.config.ts
 
-Classe responsável por centralizar o acesso às variáveis de ambiente com tipos e valores padrão.
+Class responsible for centralizing access to environment variables with types and default values.
 
-### Variáveis Disponíveis
+### Available Variables
 
 #### `nodeEnv: string | undefined`
 
-Retorna o ambiente de execução da aplicação (development, production, etc).
+Returns the application execution environment (development, production, etc).
 
 ```typescript
 const env = Env.nodeEnv; // 'development', 'production', etc
@@ -18,7 +18,7 @@ const env = Env.nodeEnv; // 'development', 'production', etc
 
 #### `port: number`
 
-Porta onde a aplicação será executada. Padrão: `5001`
+Port where the application will run. Default: `5001`
 
 ```typescript
 const port = Env.port; // 5001
@@ -26,33 +26,33 @@ const port = Env.port; // 5001
 
 #### `corsOrigin: CorsOrigin`
 
-Configuração de origens permitidas para CORS. Pode ser `"*"` ou um array de URLs.
-Padrão: `['http://localhost:3000']`
+Configuration of allowed origins for CORS. Can be `"*"` or an array of URLs.
+Default: `['http://localhost:3000']`
 
 ```typescript
-const origins = Env.corsOrigin; // '*' ou ['http://localhost:3000', 'https://example.com']
+const origins = Env.corsOrigin; // '*' or ['http://localhost:3000', 'https://example.com']
 ```
 
 #### `skipAuth: boolean`
 
-Flag para pular a validação de autenticação. Padrão: `false`
+Flag to skip authentication validation. Default: `false`
 
-⚠️ **ATENÇÃO**: Nunca defina como `true` em produção!
+⚠️ **WARNING**: Never set to `true` in production!
 
 ```typescript
-const skipAuth = Env.skipAuth; // true ou false
+const skipAuth = Env.skipAuth; // true or false
 ```
 
-### Uso
+### Usage
 
 ```typescript
 import { Env } from './config/env.config';
 
-// Usar no código
+// Use in code
 const port = Env.port;
 const corsOrigin = Env.corsOrigin;
 ```
 
-### Testes
+### Tests
 
-Os testes unitários da classe Env estão localizados em `test/config/env.config.spec.ts` e cobrem todos os cenários de uso.
+Unit tests for the Env class are located in `test/config/env.config.spec.ts` and cover all usage scenarios.
