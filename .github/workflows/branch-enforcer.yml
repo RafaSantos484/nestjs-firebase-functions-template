@@ -1,0 +1,52 @@
+name: Enforce source branches for master and develop
+
+on:
+  pull_request:
+    branches: [master, develop]
+
+permissions:
+  statuses: write # necessário para marcar o status do PR
+
+jobs:
+  check-source-branch-master:
+    if: github.base_ref == 'master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR source branch for master
+        run: |
+          HEAD="${{ github.head_ref }}"
+          if [[ "$HEAD" != "develop" && ! "$HEAD" =~ ^hotfix/ ]]; then
+            echo "ERROR: Only PRs from 'develop' or 'hotfix/*' branches can be merged into master."
+            exit 1
+          fi
+          echo "✓ Branch '$HEAD' is allowed to merge into master"
+
+  check-source-branch-develop:
+    if: github.base_ref == 'develop'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR source branch for develop
+        run: |
+          HEAD="${{ github.head_ref }}"
+          # Permite PRs vindos da master (back-merge) OU dos tipos válidos
+          if [[ "$HEAD" == "master" ]]; then
+            echo "✓ Back-merge: 'master' -> 'develop' permitido"
+            exit 0
+          fi
+
+          if [[ ! "$HEAD" =~ ^(feat|feature|fix|chore|refactor|style|ci|test|docs|hotfix)/ ]]; then
+            echo "ERROR: Only PRs from valid branch types (or 'master' for back-merge) can be merged into develop:"
+            echo "  - master (back-merge)"
+            echo "  - feat/*"
+            echo "  - feature/*"
+            echo "  - fix/*"
+            echo "  - chore/*"
+            echo "  - refactor/*"
+            echo "  - style/*"
+            echo "  - ci/*"
+            echo "  - test/*"
+            echo "  - docs/*"
+            echo "  - hotfix/*"
+            exit 1
+          fi
+          echo "✓ Branch '$HEAD' is allowed to merge into develop"
