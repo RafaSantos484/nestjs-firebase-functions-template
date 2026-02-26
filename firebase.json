@@ -10,10 +10,20 @@
         "firebase-debug.*.log",
         "*.local"
       ],
-      "predeploy": [
-        "npm run build"
-      ],
+      "predeploy": ["npm run build"],
       "source": "."
     }
-  ]
+  ],
+  "emulators": {
+    "functions": {
+      "port": 5001
+    },
+    "pubsub": {
+      "port": 8007
+    },
+    "ui": {
+      "enabled": true
+    },
+    "singleProjectMode": true
+  }
 }
