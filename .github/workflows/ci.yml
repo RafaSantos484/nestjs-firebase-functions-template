@@ -3,61 +3,120 @@ name: CI
 on:
   pull_request:
     branches: [master, develop]
+  push:
+    branches: [develop]
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  statuses: write
+  checks: write
+  pull-requests: write
+
 jobs:
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node.js 22.x
+      
+      - name: Setup Node.js 22.x
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
           cache: 'npm'
+      
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefer-offline
+      
       - name: Run linter
         run: npm run lint
 
+  type-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci --prefer-offline
+      
+      - name: Verify TypeScript compilation
+        run: npx tsc --noEmit
+
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node.js 22.x
+      
+      - name: Setup Node.js 22.x
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
           cache: 'npm'
+      
       - name: Install dependencies
-        run: npm ci
-      - name: Run tests
-        run: npm test
-      - name: Upload coverage artifact
+        run: npm ci --prefer-offline
+      
+      - name: Run tests with coverage
+        run: npm run test:coverage
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+      
+      - name: Archive coverage reports
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: coverage-report
-          path: ./coverage/lcov.info
+          path: ./coverage
+          retention-days: 7
 
   build:
-    needs: [lint, test]
+    needs: [lint, type-check, test]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node.js 22.x
+      
+      - name: Setup Node.js 22.x
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
           cache: 'npm'
+      
       - name: Install dependencies
-        run: npm ci
-      - name: Build
+        run: npm ci --prefer-offline
+      
+      - name: Build application
         run: npm run build
-      - name: Upload build artifact
+      
+      - name: Verify build output
+        run: |
+          if [[ ! -f "dist/main.js" ]]; then
+            echo "::error::Build failed: dist/main.js not found"
+            exit 1
+          fi
+          echo "::notice::Build successful - dist/main.js created"
+      
+      - name: Archive build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dist-build
           path: ./dist
+          retention-days: 7
