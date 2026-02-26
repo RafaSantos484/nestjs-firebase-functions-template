@@ -250,6 +250,81 @@ The template includes:
 - **Source maps**: Enabled for debugging
 - **Tree shaking**: Unused code is removed
 
+## 🔄 CI/CD
+
+The template includes pre-configured GitHub Actions workflows:
+
+### Continuous Integration (CI)
+
+**Workflow**: `.github/workflows/ci.yml`
+
+Runs on **pull requests** to `master` or `develop` branches:
+
+- **Lint** - ESLint code quality checks
+- **Test** - Jest unit and e2e tests with coverage reports
+- **Build** - TypeScript compilation verification
+
+Features:
+- Parallel job execution for faster feedback
+- Artifact uploads (coverage reports and build output)
+- Concurrency control (cancels outdated runs)
+
+### Continuous Deployment (CD)
+
+**Workflow**: `.github/workflows/deploy.yml`
+
+Automatically deploys to Firebase Functions when code is **pushed to `master`**:
+
+1. Builds the application
+2. Creates production environment file from secrets
+3. Deploys to Firebase Functions using service account
+
+**Required GitHub Secrets**:
+- `FIREBASE_SERVICE_ACCOUNT` - Firebase service account JSON
+- `ENV_PROD` - Production environment variables (`.env.prod` content)
+
+### Branch Enforcement
+
+**Workflow**: `.github/workflows/branch-enforcer.yml`
+
+Enforces Git workflow conventions on pull requests:
+
+**For `master` branch:**
+- ✅ Only accepts PRs from `develop` or `hotfix/*` branches
+
+**For `develop` branch:**
+- ✅ Accepts PRs from feature branches: `feat/*`, `feature/*`, `fix/*`, `chore/*`, `refactor/*`, `style/*`, `ci/*`, `test/*`, `docs/*`, `hotfix/*`
+- ✅ Allows back-merges from `master`
+
+### CI/CD Setup
+
+1. **Enable GitHub Actions** in your repository settings
+
+2. **Add required secrets**:
+   ```bash
+   # GitHub Repository → Settings → Secrets and variables → Actions
+   
+   # Add FIREBASE_SERVICE_ACCOUNT
+   # (Copy content from Firebase Console → Project Settings → Service Accounts)
+   
+   # Add ENV_PROD
+   # Example content:
+   PORT=5001
+   CORS_ORIGIN=https://yourdomain.com
+   SKIP_AUTH=false
+   NODE_ENV=production
+   ```
+
+3. **Update Firebase project alias**:
+   ```bash
+   # Edit .firebaserc
+   {
+     "projects": {
+       "prod": "your-firebase-project-id"
+     }
+   }
+   ```
+
 ## 🧪 Testing
 
 ### Unit Tests

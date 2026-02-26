@@ -354,11 +354,172 @@ logger.error('Error message');
 
 1. ✅ Complete this setup guide
 2. ✅ Update README.md with project-specific info
-3. ✅ Configure CI/CD (GitHub Actions, GitLab CI, etc.)
+3. ✅ Configure CI/CD (see section below)
 4. ✅ Set up staging environment
 5. ✅ Add monitoring and alerts
 6. ✅ Configure backup strategy
 7. ✅ Document API endpoints (consider Swagger/OpenAPI)
+
+## 🔄 CI/CD Setup
+
+The template includes pre-configured GitHub Actions workflows. Follow these steps to enable them:
+
+### 1. Enable GitHub Actions
+
+Ensure GitHub Actions is enabled in your repository:
+- Go to **Settings** → **Actions** → **General**
+- Choose "Allow all actions and reusable workflows"
+
+### 2. Configure GitHub Secrets
+
+Add the following secrets in **Settings** → **Secrets and variables** → **Actions** → **New repository secret**:
+
+#### `FIREBASE_SERVICE_ACCOUNT`
+
+Firebase service account credentials (JSON format):
+
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Select your project
+3. Go to **Settings ⚙️** → **Service Accounts**
+4. Click **"Generate New Private Key"**
+5. Copy the entire JSON content
+6. Add to GitHub Secrets as `FIREBASE_SERVICE_ACCOUNT`
+
+#### `ENV_PROD`
+
+Production environment variables (.env format):
+
+```env
+PORT=5001
+CORS_ORIGIN=https://yourdomain.com,https://app.yourdomain.com
+SKIP_AUTH=false
+NODE_ENV=production
+# Add any custom environment variables your application needs
+```
+
+### 3. Update Firebase Project Alias
+
+The deploy workflow uses the `prod` alias. Update `.firebaserc`:
+
+```json
+{
+  "projects": {
+    "default": "your-dev-project-id",
+    "prod": "your-production-project-id"
+  }
+}
+```
+
+### 4. Protect Branches (Recommended)
+
+Configure branch protection rules in **Settings** → **Branches** → **Add rule**:
+
+**For `master` branch:**
+- ✅ Require pull request reviews before merging
+- ✅ Require status checks to pass (select CI workflow jobs)
+- ✅ Require branches to be up to date before merging
+- ✅ Do not allow bypassing the above settings
+
+**For `develop` branch:**
+- ✅ Require status checks to pass
+- ✅ Require branches to be up to date before merging
+
+### 5. Workflow Overview
+
+**CI Workflow** (`.github/workflows/ci.yml`):
+- Triggers on PRs to `master` or `develop`
+- Runs: lint → test → build (parallel where possible)
+- Uploads coverage reports and build artifacts
+
+**Deploy Workflow** (`.github/workflows/deploy.yml`):
+- Triggers on push to `master`
+- Deploys to Firebase Functions automatically
+- Uses secrets for credentials and environment variables
+
+**Branch Enforcer** (`.github/workflows/branch-enforcer.yml`):
+- Enforces branch naming conventions
+- Ensures proper Git Flow workflow
+- Prevents invalid PRs
+
+### 6. Test the Workflows
+
+1. Create a feature branch:
+   ```bash
+   git checkout -b feat/test-ci
+   git push -u origin feat/test-ci
+   ```
+
+2. Open a PR to `develop`
+3. Verify CI workflow runs successfully
+4. Merge to `develop`
+5. Create a PR from `develop` to `master`
+6. Merge to trigger deployment
+
+### Customizing Workflows
+
+#### Change Node.js Version
+
+Edit all workflow files and update:
+```yaml
+- name: Use Node.js 22.x
+  uses: actions/setup-node@v4
+  with:
+    node-version: '22.x'  # Change to your desired version
+```
+
+#### Add Staging Environment
+
+1. Add `ENV_STAGING` secret to GitHub
+2. Update `.firebaserc`:
+   ```json
+   {
+     "projects": {
+       "staging": "your-staging-project-id",
+       "prod": "your-production-project-id"
+     }
+   }
+   ```
+
+3. Create `.github/workflows/deploy-staging.yml`:
+   ```yaml
+   name: Deploy Staging
+   
+   on:
+     push:
+       branches: [develop]
+   
+   jobs:
+     deploy:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+         
+         - name: Use Node.js 22.x
+           uses: actions/setup-node@v4
+           with:
+             node-version: '22.x'
+             cache: 'npm'
+         
+         - name: Install dependencies
+           run: npm ci
+         
+         - name: Build
+           run: npm run build
+         
+         - name: Create environment file
+           run: echo "${{ secrets.ENV_STAGING }}" > .env.staging
+         
+         - name: Create Firebase service account file
+           run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > ${{ runner.temp }}/gcp-key.json
+         
+         - name: Deploy to Firebase Functions (Staging)
+           run: |
+             npm install -g firebase-tools
+             firebase use staging
+             firebase deploy --only functions --force --non-interactive
+           env:
+             GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/gcp-key.json
+   ```
 
 ## 📚 Additional Resources
 
