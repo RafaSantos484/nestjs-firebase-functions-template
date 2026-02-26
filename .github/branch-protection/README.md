@@ -2,10 +2,12 @@
 
 This directory contains the definitions of **Branch Protection Rules** that must be applied to the GitHub repository to ensure security, code quality and compliance with the development workflow.
 
+**Note:** GitHub Actions triggers are configured broadly; job execution is gated by base branch checks (default branch or `develop`). This keeps status check names stable without hard-coding the default branch name.
+
 ## 📋 Files
 
 - **[develop.json](develop.json)** - Rules for `develop` branch
-- **[master.json](master.json)** - Rules for `master` branch
+- **[default-branch.json](default-branch.json)** - Rules for the default branch (production)
 
 ---
 
@@ -33,9 +35,9 @@ This directory contains the definitions of **Branch Protection Rules** that must
 ✓ CI / build
 ```
 
-### 👉 Branch `master`
+### 👉 Default branch (production)
 
-**Purpose:** Production release branch
+**Purpose:** Production release branch (default branch)
 
 | Rule | Status | Description |
 |------|--------|-----------|
@@ -45,13 +47,13 @@ This directory contains the definitions of **Branch Protection Rules** that must
 | Dismiss stale reviews | ✅ Active | Obsolete reviews don't count |
 | Resolve discussions | ✅ Active | **All comments must be resolved** |
 | Strict status | ✅ Active | Rebase requires new CI pass |
-| Creation block | ✅ Active | Cannot create branch from master |
-| Deletion block | ✅ Active | Cannot delete master |
+| Creation block | ✅ Active | Cannot create branch from the default branch |
+| Deletion block | ✅ Active | Cannot delete the default branch |
 | CI Checks | ✅ Active | lint, type-check, test, build |
 
 **Required Status Checks:**
 ```
-✓ Branch Validation / check-source-branch-master
+✓ Branch Validation / check-source-branch-default
 ✓ CI / lint
 ✓ CI / type-check    (new on 2026-02-26)
 ✓ CI / test
@@ -94,10 +96,10 @@ GitHub → Your repository → Settings → Branches
 
 4. **Save changes**
 
-#### Step 3: Add Rule for `master`
+#### Step 3: Add Rule for the default branch
 1. Click "Add rule"
-2. Pattern: `master`
-3. Configure each section according to [master.json](master.json):
+2. Pattern: `~DEFAULT_BRANCH`
+3. Configure each section according to [default-branch.json](default-branch.json):
 
 **Protect matching branches:**
 - ✅ Require a pull request before merging
@@ -107,7 +109,7 @@ GitHub → Your repository → Settings → Branches
   - ✅ Require status checks to pass
     - ✓ **require branches to be up to date (strict mode)**
     - ✓ Select status checks:
-      - Branch Validation / check-source-branch-master
+      - Branch Validation / check-source-branch-default
       - CI / lint
       - CI / type-check
       - CI / test
@@ -159,78 +161,15 @@ gh api -H "X-GitHub-Api-Version:2022-11-28" \
   --input develop.json
 ```
 
-**For `master`:**
+**For the default branch:**
 ```bash
 gh api -H "X-GitHub-Api-Version:2022-11-28" \
   repos/YOUR_OWNER/YOUR_REPO/rules \
-  -F name="master" \
+  -F name="default-branch" \
   -F target="branch" \
   -f conditions='{"ref_name":{"include":["~DEFAULT_BRANCH"]}}' \
   -f enforcement="active" \
-  --input master.json
-```
-
----
-
-### Option 3: Python Application Script
-
-#### Prerequisites
-```bash
-# Install Python 3.8+
-pip install requests
-
-# Set GitHub token
-export GITHUB_TOKEN=your_personal_access_token
-```
-
-#### Run the Script
-```bash
-python3 apply_branch_rules.py \
-  --owner YOUR_OWNER \
-  --repo YOUR_REPO
-```
-
-See [apply_branch_rules.py](apply_branch_rules.py) for details.
-
----
-
-### Option 4: GitHub Actions Workflow (CI/CD)
-
-A dedicated workflow can apply the rules automatically:
-
-```yaml
-# .github/workflows/setup-branch-rules.yml
-name: Setup Branch Rules
-
-on:
-  workflow_dispatch:
-  push:
-    paths:
-      - '.github/branch-protection/*.json'
-
-jobs:
-  apply-rules:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      
-      - name: Install dependencies
-        run: pip install requests
-      
-      - name: Apply branch protection rules
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python3 .github/branch-protection/apply_branch_rules.py \
-            --owner ${{ github.repository_owner }} \
-            --repo ${{ github.event.repository.name }}
+  --input default-branch.json
 ```
 
 ---
@@ -288,18 +227,18 @@ git push origin feat/test-ci
 # Expected result: ❌ CI fails
 ```
 
-### Test 3: Forced Push (master)
+### Test 3: Forced Push (default branch)
 ```bash
 # Try to force push
-git push --force origin master
+git push --force origin DEFAULT_BRANCH
 
 # Expected result: ❌ Access denied
 ```
 
-### Test 4: Deletion (master)
+### Test 4: Deletion (default branch)
 ```bash
-# Try to delete master
-git push origin --delete master
+# Try to delete the default branch
+git push origin --delete DEFAULT_BRANCH
 
 # Expected result: ❌ Access denied
 ```
@@ -369,7 +308,7 @@ The rules reference these status checks from workflows:
 | Workflow | Job | Status Check |
 |----------|-----|--------------|
 | branch-enforcer.yml | check-source-branch-develop | Branch Validation / check-source-branch-develop |
-| branch-enforcer.yml | check-source-branch-master | Branch Validation / check-source-branch-master |
+| branch-enforcer.yml | check-source-branch-default | Branch Validation / check-source-branch-default |
 | ci.yml | lint | CI / lint |
 | ci.yml | type-check | CI / type-check |
 | ci.yml | test | CI / test |
@@ -396,7 +335,7 @@ Solution: Add an approval via GitHub UI before merging
 ### "Base branch is out of date"
 ```
 Problem: Strict mode requires rebase
-Solution: git rebase master develop && git push
+Solution: git rebase DEFAULT_BRANCH develop && git push
 ```
 
 ### "Rule creation failed"
@@ -424,4 +363,4 @@ Solution: Check:
 | Date | Version | Change |
 |------|--------|---------|
 | 2026-02-26 | 1.0 | Initial creation with type-check support |
-| 2026-02-26 | 1.1 | Added master.json with review requirements |
+| 2026-02-26 | 1.1 | Added default-branch.json with review requirements |

@@ -1,7 +1,7 @@
 {
   "id": 13273055,
-  "name": "master",
-  "description": "Master branch protection rules - production release branch with strict requirements",
+  "name": "default-branch",
+  "description": "Default branch protection rules - production release branch with strict requirements",
   "target": "branch",
   "source_type": "Repository",
   "enforcement": "active",
@@ -20,7 +20,7 @@
     },
     {
       "type": "pull_request",
-      "description": "Require pull requests for all changes to master",
+      "description": "Require pull requests for all changes to the default branch",
       "parameters": {
         "required_approving_review_count": 1,
         "dismiss_stale_reviews_on_push": false,
@@ -42,9 +42,9 @@
         "do_not_enforce_on_create": false,
         "required_status_checks": [
           {
-            "context": "Branch Validation / check-source-branch-master",
+            "context": "Branch Validation / check-source-branch-default",
             "integration_id": 15368,
-            "description": "Validates only develop or hotfix/* branches can merge to master"
+            "description": "Validates only develop or hotfix/* branches can merge to the default branch"
           },
           {
             "context": "CI / lint",
@@ -72,15 +72,15 @@
     },
     {
       "type": "creation",
-      "description": "Prevent direct branch creation from master"
+      "description": "Prevent direct branch creation from the default branch"
     },
     {
       "type": "deletion",
-      "description": "Prevent accidental deletion of master branch"
+      "description": "Prevent accidental deletion of the default branch"
     },
     {
       "type": "update",
-      "description": "Restrict updates to master branch"
+      "description": "Restrict updates to the default branch"
     }
   ],
   "bypass_actors": []

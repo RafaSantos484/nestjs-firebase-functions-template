@@ -30,13 +30,13 @@ Enforce branch naming conventions and merge rules to maintain the integrity of t
 
 #### Branch Rules
 
-**For `master`:**
+**For the default branch:**
 - ✅ PRs only from `develop` or `hotfix/*`
 - ❌ Rejects direct branches or other types
 
 **For `develop`:**
 - ✅ `feat/*`, `feature/*`, `fix/*`, `chore/*`, `refactor/*`, `style/*`, `ci/*`, `test/*`, `docs/*`, `hotfix/*`
-- ✅ `master` (back-merge allowed)
+- ✅ Default branch (back-merge allowed)
 - ❌ Rejects random branches
 
 ---
@@ -101,7 +101,7 @@ Validate code in pull requests and push to `develop` branch with multiple parall
 ## 3️⃣ Deploy to Production (`deploy.yml`)
 
 ### 📝 Objective
-Secure and validated deployment only to `master` branch with multiple layers of protection.
+Secure and validated deployment only to the default branch with multiple layers of protection.
 
 ### ✨ Implemented Improvements
 
@@ -198,28 +198,26 @@ python3 -m json.tool "${{ runner.temp }}/secrets/gcp-key.json" > /dev/null
 ```yaml
 on:
   pull_request:
-    branches: [master, develop]
 ```
-- Runs on PRs to `master` or `develop`
+- Runs on PRs to any base branch, with job-level gating for default branch or `develop`
 
 ### CI
 ```yaml
 on:
   pull_request:
-    branches: [master, develop]
   push:
     branches: [develop]
 ```
-- PRs on any branch to master/develop
+- PRs on any branch, with job-level gating for default branch or `develop`
 - Direct push to `develop` (after merge)
 
 ### Deploy
 ```yaml
 on:
   push:
-    branches: [master]
+    branches: ['**']
 ```
-- Only push to `master` (merged PRs from release/hotfix)
+- Only pushes to the default branch proceed, enforced via job-level condition
 
 ---
 
@@ -264,9 +262,9 @@ git push origin feat/my-feature
 # GitHub Actions will run: Branch Validation, CI (lint, type-check, test, build)
 # After merge to develop: CI will run again
 
-# PR to master (via develop or hotfix)
+# PR to the default branch (via develop or hotfix)
 # Only if it came from develop or hotfix/*
-# After merge to master: Deploy to production
+# After merge to the default branch: Deploy to production
 ```
 
 ### 3. Monitoring

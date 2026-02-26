@@ -2,7 +2,6 @@ name: CI
 
 on:
   pull_request:
-    branches: [master, develop]
   push:
     branches: [develop]
 
@@ -18,6 +17,9 @@ permissions:
 
 jobs:
   lint:
+    if: >-
+      ${{ github.event_name == 'pull_request' && (github.base_ref == 'develop' || github.base_ref == github.event.repository.default_branch)
+        || (github.event_name == 'push' && github.ref_name == 'develop') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -36,6 +38,9 @@ jobs:
         run: npm run lint
 
   type-check:
+    if: >-
+      ${{ github.event_name == 'pull_request' && (github.base_ref == 'develop' || github.base_ref == github.event.repository.default_branch)
+        || (github.event_name == 'push' && github.ref_name == 'develop') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -54,6 +59,9 @@ jobs:
         run: npx tsc --noEmit
 
   test:
+    if: >-
+      ${{ github.event_name == 'pull_request' && (github.base_ref == 'develop' || github.base_ref == github.event.repository.default_branch)
+        || (github.event_name == 'push' && github.ref_name == 'develop') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -88,6 +96,9 @@ jobs:
           retention-days: 7
 
   build:
+    if: >-
+      ${{ github.event_name == 'pull_request' && (github.base_ref == 'develop' || github.base_ref == github.event.repository.default_branch)
+        || (github.event_name == 'push' && github.ref_name == 'develop') }}
     needs: [lint, type-check, test]
     runs-on: ubuntu-latest
     timeout-minutes: 15
